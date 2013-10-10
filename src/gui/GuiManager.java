@@ -1,14 +1,9 @@
 package gui;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Vector;
 
 import Util.Progresser;
-
-//import overhead.distribute.ServerAddress;
-
-
 import core.KryptoFacade;
 import core.algorithm.EnumAlgorithms;
 import core.algorithm.ecc.ECC;
@@ -31,6 +26,7 @@ import core.util.PosBigInt;
 
 public class GuiManager {
 
+	private static final int DEFAULT_PRIME_CERTAINITY = 100;
 	//private final Vector<ServerAddress> servers;
 	private boolean actAsServer = false;
 	private boolean useDistribution = false;
@@ -54,14 +50,16 @@ public class GuiManager {
 		return eccKeys;
 	}
 
-	public void setEccKeys(KeyPairECC eccKeys) {
+	public void setEccKeys(final KeyPairECC eccKeys) {
 		this.eccKeys = eccKeys;
 	}
 
 	private static GuiManager instance;
 
 	public static GuiManager getInstance(){
-		if(GuiManager.instance == null) GuiManager.instance = new GuiManager();
+		if(GuiManager.instance == null) {
+			GuiManager.instance = new GuiManager();
+		}
 		return GuiManager.instance;
 	}
 
@@ -279,7 +277,7 @@ public class GuiManager {
 		return this.alphabet;
 	}
 
-	private void setAlphabet(Alphabet a){
+	private void setAlphabet(final Alphabet a){
 		this.alphabet = a;
 		this.chiffreBlocksize = RSAFacade.getOptimalChiffreBlocksize(this.getKp().getPrivateKey().getMainModul(), this.getAlphabet());
 	}
@@ -359,7 +357,7 @@ public class GuiManager {
 		case ECC:
 			try {
 				ECC ecc = new ECC();
-				this.setEccKeys(ecc.generateKeys(this.getPrimeBitLenght()));
+				this.setEccKeys(ecc.generateKeys(this.getPrimeBitLenght(),DEFAULT_PRIME_CERTAINITY));
 				Vector<String> res = this.getKeyStringVector();
 				res.add(0, "Schlüssel berechent");
 				return res;
@@ -421,7 +419,7 @@ public class GuiManager {
 		}
 	}
 
-	public void setCurrentAlphabet(EnumAlphabet current) {
+	public void setCurrentAlphabet(final EnumAlphabet current) {
 		switch(current){
 		case JAVA_CHAR:
 			this.setAlphabet(new AlphabetBig());
@@ -442,7 +440,7 @@ public class GuiManager {
 		this.setBlocksize(RSAFacade.getMaxCleartextBlocksize(kp.getPrivateKey().getMainModul(), this.getAlphabet()));
 	}
 
-	public void loadKeys(String absolutePath) throws Exception{
+	public void loadKeys(final String absolutePath) throws Exception{
 		if(absolutePath.endsWith(".ecc")){
 			this.setEccKeys(Key.loadEccKeys(absolutePath));
 		} else if(absolutePath.endsWith(".rsa")){
@@ -454,7 +452,7 @@ public class GuiManager {
 
 	private String opfilePath;
 
-	public void setOpFile(String absolutePath) {
+	public void setOpFile(final String absolutePath) {
 		this.setOpfilePath(absolutePath);
 	}
 
@@ -462,11 +460,11 @@ public class GuiManager {
 		return opfilePath;
 	}
 
-	public void setOpfilePath(String opfilePath) {
+	public void setOpfilePath(final String opfilePath) {
 		this.opfilePath = opfilePath;
 	}
 
-	public String doEnCodeFile(Progresser prg) {
+	public String doEnCodeFile(final Progresser prg) {
 		System.out.println("test");
 		switch (this.getCurrentAlgo()) {
 		case ECC:
@@ -486,7 +484,7 @@ public class GuiManager {
 		return "Datei Verschlüsselt DUMMI";
 	}
 
-	public String doDeCodeFile(Progresser prg) {
+	public String doDeCodeFile(final Progresser prg) {
 		System.out.println("test");
 		switch (this.getCurrentAlgo()) {
 		case ECC:
@@ -514,7 +512,7 @@ public class GuiManager {
 		}
 	}
 
-	public void setSecLevel(SecLevel valueOf) {
+	public void setSecLevel(final SecLevel valueOf) {
 		switch (valueOf) {
 		case niedrig:
 			this.setPrimeBitLenght(128);
@@ -529,5 +527,5 @@ public class GuiManager {
 			this.setPrimeBitLenght(1024);
 			break;
 		}
-	}	
+	}
 }
