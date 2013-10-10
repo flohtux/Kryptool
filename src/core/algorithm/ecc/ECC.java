@@ -102,8 +102,7 @@ public class ECC {
 		return new Tuple<Tuple<BigInteger,BigInteger>, Point>(new Tuple<BigInteger , BigInteger>(b1, b2), a);
 	}
 
-	public void decode(final EllipticCurve e, final BigInteger p,final BigInteger b1, final BigInteger b2, final Point a, final BigInteger x) throws Exception {
-		System.out.println("decode");
+	public Tuple<BigInteger, BigInteger> decode(final EllipticCurve e, final BigInteger p,final BigInteger b1, final BigInteger b2, final Point a, final BigInteger x) throws Exception {
 		Point xa = e.mulFast(a, x);
 		NPoint xan;
 		if (!e.isInfinitePoint(xa)) {
@@ -113,8 +112,7 @@ public class ECC {
 		}
 		BigInteger m1 = b1.multiply(xan.getX().modInverse(p)).mod(p);
 		BigInteger m2 = b2.multiply(xan.getY().modInverse(p)).mod(p);
-		System.out.println(m1);
-		System.out.println(m2);
+		return new Tuple<BigInteger, BigInteger>(m1, m2);
 	}
 
 

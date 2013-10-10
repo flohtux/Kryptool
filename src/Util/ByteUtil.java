@@ -13,22 +13,33 @@ public class ByteUtil {
 	public static void write(String filePath,LinkedList<byte[]> data) throws IOException{
 		int maxSize = ByteUtil.getMaxSize(data);
 		int prefixSize = ByteUtil.getPrefixSize(maxSize);
-		if(prefixSize > 256) throw new IOException("To Long Data element(prefix size overflow)");
+		byte[] first = BigInteger.valueOf(prefixSize).toByteArray();
+		if(first.length > 1) throw new IOException("To Long Data element(prefix size overflow)");
 		File resultFile = new File(filePath);
 		if(!resultFile.exists()) resultFile.createNewFile();
 		FileOutputStream stream = new FileOutputStream(resultFile);
 		try {
-			stream.write((byte)prefixSize);
+			stream.write(first);
 			for (byte[] bs : data) {
-				byte[] prefix = BigInteger.valueOf(prefixSize).toByteArray();
-				if(prefix.length != prefixSize) throw new IOException("calc prefix != realprefix");
+				byte[] prefix = ByteUtil.getPrefix(bs.length,prefixSize);
 				stream.write(prefix);
+				System.out.println("Prefix sagt: "+new BigInteger(prefix) );
+				System.out.println("bs ist: "+bs.length );
+				if(bs[0] == 0) System.out.println("erster kann weg");
 				stream.write(bs);
 			}
 			stream.flush();
 		} finally {
 			stream.close();
 		}
+	}
+
+	public static byte[] getPrefix(int length, int prefixSize) throws IOException {
+		byte[] res = new byte[prefixSize];
+		byte[] inter = BigInteger.valueOf(length).toByteArray();
+		if(inter.length > prefixSize) throw new IOException("Nop");
+		System.arraycopy(inter, 0, res, res.length - inter.length, inter.length);
+		return res;
 	}
 
 	private static int getMaxSize(LinkedList<byte[]> data){
@@ -39,15 +50,8 @@ public class ByteUtil {
 		return maxSize;
 	}
 
-	private static int oneByte = 8;
 	private static int getPrefixSize(int maxSize){
-		int high = ByteUtil.oneByte;
-		int prefixSize = 2^high;
-		while(maxSize > prefixSize){
-			high = high + ByteUtil.oneByte;
-			prefixSize = 2^high;
-		}
-		return high/8;
+		return BigInteger.valueOf(maxSize).toByteArray().length;
 	}
 
 	public static LinkedList<byte[]> read(String filePath) throws IOException{
@@ -55,14 +59,15 @@ public class ByteUtil {
 		FileInputStream stream = new FileInputStream(f);
 		LinkedList<byte[]> result = new LinkedList<byte[]>();
 		try {
-			int pos = stream.read();
+			int pos = 0;
 			if(pos != -1){
 				byte[] first = new byte[1];
 				pos = stream.read(first, 0, 1);
 				int prefixSize = new BigInteger(first).intValue();
-				while(pos != -1){
+				while(pos > 0){
 					byte[] prefix = new byte[prefixSize];
 					pos = stream.read(prefix, 0, prefixSize);
+					if(pos < 0) break;
 					int dataSize = new BigInteger(prefix).intValue();
 					byte[] data = new byte[dataSize];
 					pos = stream.read(data, 0, dataSize);

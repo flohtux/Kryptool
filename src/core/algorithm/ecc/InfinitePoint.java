@@ -1,4 +1,7 @@
 package core.algorithm.ecc;
+
+import common.Tuple;
+
 public class InfinitePoint implements Point{
 
 	@Override
@@ -11,9 +14,10 @@ public class InfinitePoint implements Point{
 	}
 
 	@Override
-	public byte[] toBytes() {
-		byte[] b = {0};
-		return b;
+	public Tuple<byte[], byte[]> toBytes() {
+		byte[] x = {-1};
+		byte[] y = {-1};
+		return new Tuple<byte[], byte[]>(x, y);
 	}
 
 }

@@ -1,6 +1,8 @@
 package core.algorithm.ecc;
 import java.math.BigInteger;
 
+import common.Tuple;
+
 
 public class NPoint implements Point{
 	
@@ -30,13 +32,12 @@ public class NPoint implements Point{
 	}
 
 	@Override
-	public byte[] toBytes() {
-		byte[] xA = this.getX().toByteArray();
-		byte[] yA = this.getY().toByteArray();
-		byte[] b = new byte[xA.length + yA.length];
-		System.arraycopy(xA, 0, b, 0, xA.length);
-		System.arraycopy(yA, 0, b, xA.length, yA.length);
-		return b;
+	public Tuple<byte[], byte[]> toBytes() {
+		byte[] x = this.getX().toByteArray();
+		byte[] y = this.getY().toByteArray();
+		int xx = x.length;
+		int yy= y.length;
+		return new Tuple<byte[], byte[]>(x, y);
 	}
 
 }

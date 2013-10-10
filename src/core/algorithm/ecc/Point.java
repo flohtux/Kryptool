@@ -1,8 +1,11 @@
 package core.algorithm.ecc;
+
+import common.Tuple;
+
 public interface Point {
 
 	public boolean accept(PointVisitor v);
 
-	public byte[] toBytes();
+	public Tuple<byte[], byte[]> toBytes();	
 		
 }

@@ -487,14 +487,21 @@ public class GuiManager {
 	}
 
 	public String doDeCodeFile(Progresser prg) {
-		prg.step(50);
-		for(int i = 0; i<50; i++){
-			prg.step();
+		System.out.println("test");
+		switch (this.getCurrentAlgo()) {
+		case ECC:
 			try {
-				Thread.currentThread().sleep(100);
-			} catch (InterruptedException e) {
+				ECCFileUtil.deCodeFile(this.getOpfilePath(), this.getEccKeys(),prg);
+			} catch (Exception e) {
 				e.printStackTrace();
+				ErrorDialog.getInstance().show(e.getMessage());
 			}
+			break;
+		case RSA:
+				System.err.println("rsa");
+			break;
+		default:
+			break;
 		}
 		return "Datei EntschlŸsselt DUMMI";
 	}
