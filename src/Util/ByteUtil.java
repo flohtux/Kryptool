@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.LinkedList;
 
+import core.algorithm.ecc.ECCFileUtil;
+import core.algorithm.ecc.EccAfterEncodeBlock;
+
 public class ByteUtil {
 
 	public static void write(String filePath,LinkedList<byte[]> data) throws IOException{
@@ -23,15 +26,58 @@ public class ByteUtil {
 			for (byte[] bs : data) {
 				byte[] prefix = ByteUtil.getPrefix(bs.length,prefixSize);
 				stream.write(prefix);
-				System.out.println("Prefix sagt: "+new BigInteger(prefix) );
-				System.out.println("bs ist: "+bs.length );
-				if(bs[0] == 0) System.out.println("erster kann weg");
 				stream.write(bs);
 			}
 			stream.flush();
 		} finally {
 			stream.close();
 		}
+	}
+
+	public static LinkedList<byte[]> readWithConstantBlockSize(String filePath,int blockSize) throws IOException{
+		File f = new File(filePath);
+		FileInputStream stream = new FileInputStream(f);
+		LinkedList<byte[]> result = new LinkedList<byte[]>();
+		try {
+			int pos = 1;
+			while(pos > 0){
+				byte[] data = new byte[blockSize];
+				pos = stream.read(data, 0, blockSize);
+				if(pos < 1) break;
+				result.add(data);
+			}
+		} finally {
+			stream.close();
+		}
+		System.out.println("eingelesene Blšcke: " + result.size());
+		return result;
+	}
+	
+	public static void writeWithConstantBlockSize(String filePath,LinkedList<byte[]> data,int blockSize) throws IOException{
+		File resultFile = new File(filePath);
+		if(!resultFile.exists()) resultFile.createNewFile();
+		FileOutputStream stream = new FileOutputStream(resultFile);
+		try {
+			for (byte[] bs : data) {
+				if(bs.length < blockSize){
+					stream.write(ByteUtil.toBlockSize(bs, blockSize));
+				} else if(bs.length == blockSize){
+					stream.write(bs);
+				} else {
+					System.err.println("Error array grš§er blocksize");
+				}
+			}
+			System.out.println("geschriebene Blšcke: " +data.size());
+			stream.flush();
+		} finally {
+			stream.close();
+		}
+	}
+	
+	public static byte[] toBlockSize(byte[] input, int blocksize){
+		byte[] result = new byte[blocksize];
+		System.arraycopy(input, 0, result, result.length - input.length, input.length);
+		return result;
 	}
 
 	public static byte[] getPrefix(int length, int prefixSize) throws IOException {

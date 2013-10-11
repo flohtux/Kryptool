@@ -11,10 +11,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.LinkedList;
 
+import net.lingala.zip4j.util.Zip4jUtil;
+
 import common.Tuple;
 
 import Util.ByteUtil;
 import Util.Progresser;
+import Util.ZipUtil;
 import core.key.KeyPairECC;
 import core.key.PublicKeyEcc;
 
@@ -22,9 +25,8 @@ public class ECCFileUtil {
 
 	public static void enCodeFile(String opfilePath, PublicKeyEcc publicKey,Progresser prg) throws Exception {
 		ECC ecc = new ECC();
-		File f = new File(opfilePath);
 		int len =  (publicKey.getP().bitLength() / 8) - 1;
-		System.out.println("p.bitlen/8"+(len+1));
+		System.out.println("p.bitlen/8 "+(len+1));
 		LinkedList<EccEncodeBlock> l = ECCFileUtil.getM1AndM2List(new File(opfilePath),BigInteger.valueOf(len));
 		prg.step(l.size());
 		LinkedList<EccAfterEncodeBlock> data = new LinkedList<EccAfterEncodeBlock>();
@@ -33,13 +35,13 @@ public class ECCFileUtil {
 			data.add(new EccAfterEncodeBlock(x.getFirst().getFirst(), x.getFirst().getSecond(), x.getSecond()));
 			prg.step();
 		}
-		ECCFileUtil.writeEncodedFile(opfilePath, data);
+		ECCFileUtil.writeEncodedFile(opfilePath, data,publicKey.getP());
 	}
 	
 	public static void deCodeFile(String opfilePath, KeyPairECC keys, Progresser prg) throws Exception{
 		ECC ecc = new ECC();
-		File f = new File(opfilePath);
-		LinkedList<byte[]> sourceData = ByteUtil.read(opfilePath);
+		//LinkedList<byte[]> sourceData = ByteUtil.read(opfilePath);
+		LinkedList<byte[]> sourceData = ByteUtil.readWithConstantBlockSize(opfilePath, keys.getPublicKey().getP().toByteArray().length);
 		LinkedList<EccAfterEncodeBlock> resData = new LinkedList<EccAfterEncodeBlock>();
 		prg.step(sourceData.size() / 4);
 		for (int i = 0; i<sourceData.size(); i=i+4) {
@@ -50,8 +52,8 @@ public class ECCFileUtil {
 			resData.add(new EccAfterEncodeBlock(resT.getFirst(), resT.getSecond(), a));
 			prg.step();
 		}
-		File fr = new File(opfilePath.substring(0, opfilePath.length() - 7));
-		if(!f.exists()) f.createNewFile();
+		File fr = new File(opfilePath.substring(0, opfilePath.length() - 7).concat(".zip"));
+		if(!fr.exists()) fr.createNewFile();
 		FileOutputStream stream = new FileOutputStream(fr);
 		EccAfterEncodeBlock last = resData.getLast();
 		resData.removeLast();
@@ -69,9 +71,11 @@ public class ECCFileUtil {
 		stream.write(ECCFileUtil.removeBufferOfLastElement(new Tuple<byte[], byte[]>(m1, m2)));
 		stream.flush();
 		stream.close();
+		ZipUtil.unzip(fr.getAbsolutePath());
+		fr.delete();
 	}
 	
-	private static byte[] coppyToBlockSize(byte[] source, int blockSize){
+	public static byte[] coppyToBlockSize(byte[] source, int blockSize){
 		byte[] rs = new byte[blockSize];
 		int startPos = rs.length - (source.length);
 		int len = source.length;
@@ -104,7 +108,7 @@ public class ECCFileUtil {
 		return res;
 	}
 
-	private static void writeEncodedFile(String sourceFile,LinkedList<EccAfterEncodeBlock> data) throws IOException{
+	private static void writeEncodedFile(String sourceFile,LinkedList<EccAfterEncodeBlock> data,BigInteger p) throws IOException{
 		LinkedList<byte[]> dataResult = new LinkedList<byte[]>();
 		for (EccAfterEncodeBlock t : data) {
 			dataResult.add(t.getM1().toByteArray());
@@ -113,16 +117,24 @@ public class ECCFileUtil {
 			dataResult.add(bt.getFirst());
 			dataResult.add(bt.getSecond());
 		}
-		ByteUtil.write(sourceFile.concat(".encode"), dataResult);
+		System.out.println(p.toByteArray().length);
+		int max = 0;
+		for (byte[] bs : dataResult) {
+			if(bs.length > max) max = bs.length;
+		}
+		//ByteUtil.write(sourceFile.concat(".encode"), dataResult);
+		ByteUtil.writeWithConstantBlockSize(sourceFile.concat(".encode"), dataResult, max);
 	}
 	
 	
 	
 	private static byte[] readFileToByteArray(File file) throws IOException{
-		byte [] fileData = new byte[(int)file.length()];
-		DataInputStream dis = new DataInputStream(new FileInputStream(file));
+		File compFile = ZipUtil.zip(file.getAbsolutePath());
+		byte [] fileData = new byte[(int)compFile.length()];
+		DataInputStream dis = new DataInputStream(new FileInputStream(compFile));
 		dis.readFully(fileData);
 		dis.close();
+		compFile.delete();
 		return fileData;
 	}
 	

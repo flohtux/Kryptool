@@ -512,20 +512,7 @@ public class GuiManager {
 		}
 	}
 
-	public void setSecLevel(final SecLevel valueOf) {
-		switch (valueOf) {
-		case niedrig:
-			this.setPrimeBitLenght(128);
-			break;
-		case mittel:
-			this.setPrimeBitLenght(1024);
-			break;
-		case hoch:
-			this.setPrimeBitLenght(2048);
-			break;
-		default:
-			this.setPrimeBitLenght(1024);
-			break;
-		}
+	public void setSecLevel(int bitl) {
+			this.setPrimeBitLenght(bitl);
 	}
 }
