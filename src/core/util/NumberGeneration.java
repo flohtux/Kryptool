@@ -10,7 +10,6 @@ import common.LegendreSymbol;
 
 
 public class NumberGeneration {
-
 	private static final BigInteger BIG_INT_MINUS_ONE = BigInteger.valueOf(-1);
 	private static final BigInteger BIG_INT_SIX = BigInteger.valueOf(6);
 	private static final BigInteger BIGINT_TWO = BigInteger.valueOf(2);
@@ -29,8 +28,8 @@ public class NumberGeneration {
 			if (p.bitLength() < bitLength) {
 				continue;
 			}
-//			BigInteger randomOneOrMinOne = random.nextBoolean() ? BigInteger.ONE : BIG_INT_MINUS_ONE;
-//			p = BIG_INT_SIX.multiply(p).add(randomOneOrMinOne);
+			BigInteger randomOneOrMinOne = random.nextBoolean() ? BigInteger.ONE : BIG_INT_MINUS_ONE;
+			p = BIG_INT_SIX.multiply(p).add(randomOneOrMinOne);
 		} while (! isProbablePrime(p, security));
 		return p;
 	}
@@ -42,16 +41,10 @@ public class NumberGeneration {
 	 * @return
 	 */
 	public static boolean isProbablePrime(final BigInteger n, final int certainty) {
-		BigInteger n_minus_1 = n.subtract(BigInteger.ONE);
-		int s = n_minus_1.getLowestSetBit();
-		BigInteger d = n_minus_1.shiftRight(s);
-		Set<BigInteger> usedAs = new HashSet<>();
 		for (int round = 0; round < certainty; round++) {
-			BigInteger a;
-			do {
-				a = generateRandomNumberBelow(n_minus_1);
-			} while (haveCommonDivisors(a, n) && !usedAs.add(a));
-			if (!doTest(a,n,n_minus_1, s,d)) {
+			BigInteger a = generateA(n);
+
+			if (!doTest(a,n)) {
 				return false;
 			}
 		}
@@ -65,17 +58,23 @@ public class NumberGeneration {
 	 * @param n
 	 * @return
 	 */
-	private static boolean doTest(BigInteger a, BigInteger n, BigInteger n_minus_1, int s, BigInteger d) {
-		BigInteger a_pow_d = a.modPow(d, n);
+	private static boolean doTest(final BigInteger a, final BigInteger n) {
+		BigInteger n_minus_1 = n.subtract(BigInteger.ONE);
+		Tuple<Integer, BigInteger> sd = divideBy2TillEnd(n_minus_1);
+		int s = sd.getFirst();
+		BigInteger d = sd.getSecond();
+		BigInteger a_pow_d  = a.modPow(d, n);
 		if (a_pow_d.equals(BigInteger.ONE)) {
 			return true;
 		}
-		BigInteger a_squared = a.multiply(a);
-		for (int r=0; r < s; r++) {
+		for (int r = 0; r < s;  r++) {
 			if (a_pow_d.equals(n_minus_1)) {
 				return true;
 			}
-			a_pow_d = a_pow_d.multiply(a_squared);//.mod(n);
+			a_pow_d = a_pow_d.multiply(a_pow_d).mod(n);
+		}
+		if (a_pow_d.equals(n_minus_1)) {
+			return true;
 		}
 		return false;
 	}
@@ -108,6 +107,7 @@ public class NumberGeneration {
 	}
 
 	private static boolean haveCommonDivisors(final BigInteger a, final BigInteger n) {
+		// TODO eigener gcd
 		return ! a.gcd(n).equals(BigInteger.ONE);
 	}
 
@@ -123,6 +123,8 @@ public class NumberGeneration {
         } while (result.compareTo(BigInteger.ONE) <= 0 || result.compareTo(n) >= 0);
 		return result;
 	}
+
+
 
 
 	public static boolean isPrimitiveRootModP(final BigInteger a, final BigInteger p) {
